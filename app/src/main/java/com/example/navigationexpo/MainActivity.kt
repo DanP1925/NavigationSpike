@@ -1,6 +1,7 @@
 package com.example.navigationexpo
 
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -16,19 +17,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import com.example.navigationexpo.ui.theme.NavigationExpoTheme
+import com.ramcosta.composedestinations.DestinationsNavHost
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.NavGraphs
+import com.ramcosta.composedestinations.generated.destinations.IntScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.MainScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.ObjectScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.SecondScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.StringScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.ThirdScreenDestination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.parcelize.Parcelize
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             NavigationExpoTheme {
+                DestinationsNavHost(navGraph = NavGraphs.root)
             }
         }
     }
 }
 
+@Destination<RootGraph>(start = true)
 @Composable
 fun MainScreen(
+    navigator: DestinationsNavigator,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -44,23 +60,33 @@ fun MainScreen(
                 fontSize = 28.sp
             )
             Row {
-                Button(onClick = { }) {
+                Button(onClick = { navigator.navigate(StringScreenDestination("Mango")) }) {
                     Text(text = "Pasar un String")
                 }
-                Button(onClick = { }) {
+                Button(onClick = { navigator.navigate(IntScreenDestination(2024)) }) {
                     Text(text = "Pasar un Int")
                 }
             }
-            Button(onClick = { }) {
+            Button(onClick = {
+                navigator.navigate(
+                    ObjectScreenDestination(
+                        CustomObject(
+                            2024,
+                            "Abril"
+                        )
+                    )
+                )
+            }) {
                 Text(text = "Pasar un Objeto")
             }
-            Button(onClick = { }) {
+            Button(onClick = { navigator.navigate(SecondScreenDestination) }) {
                 Text(text = "Ir a una siguiente pantalla")
             }
         }
     }
 }
 
+@Destination<RootGraph>
 @Composable
 fun StringScreen(
     name: String,
@@ -87,6 +113,7 @@ fun StringScreen(
 }
 
 
+@Destination<RootGraph>
 @Composable
 fun IntScreen(
     number: Int,
@@ -112,11 +139,13 @@ fun IntScreen(
     }
 }
 
-data class CustomObject(
+@Parcelize
+class CustomObject(
     val number: Int,
     val name: String
-)
+) : Parcelable
 
+@Destination<RootGraph>
 @Composable
 fun ObjectScreen(
     customObject: CustomObject,
@@ -146,8 +175,10 @@ fun ObjectScreen(
     }
 }
 
+@Destination<RootGraph>
 @Composable
 fun SecondScreen(
+    navigator: DestinationsNavigator,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -162,15 +193,17 @@ fun SecondScreen(
                 text = "Segunda pantalla",
                 fontSize = 28.sp
             )
-            Button(onClick = { }) {
+            Button(onClick = { navigator.navigate(ThirdScreenDestination) }) {
                 Text(text = "Ir a la tercera pantalla")
             }
         }
     }
 }
 
+@Destination<RootGraph>
 @Composable
 fun ThirdScreen(
+    navigator: DestinationsNavigator,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -185,7 +218,7 @@ fun ThirdScreen(
                 text = "Tercera pantalla",
                 fontSize = 28.sp
             )
-            Button(onClick = { }) {
+            Button(onClick = { navigator.popBackStack(MainScreenDestination.route, false) }) {
                 Text(text = "Regresar al Inicio")
             }
         }

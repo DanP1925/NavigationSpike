@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.devtools.ksp") version "1.9.21-1.0.15"
+    id("kotlin-parcelize")
 }
 
 android {
@@ -66,4 +68,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation("io.github.raamcosta.compose-destinations:core:2.1.0-beta01")
+    ksp("io.github.raamcosta.compose-destinations:ksp:2.1.0-beta01")
 }
