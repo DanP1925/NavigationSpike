@@ -12,16 +12,71 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.navigationexpo.ui.theme.NavigationExpoTheme
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             NavigationExpoTheme {
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "main_screen") {
+                    composable("main_screen") {
+                        MainScreen(
+                            goToStringScreen = { navController.navigate("string_screen/Mango") },
+                            goToIntScreen = { navController.navigate("int_screen/2024") },
+                            goToObjectScreen = { navController.navigate("object_screen/5") },
+                            goToSecondScreen = { navController.navigate("second_screen") }
+                        )
+                    }
+                    composable(
+                        "string_screen/{name}",
+                        arguments = listOf(navArgument("name") {
+                            type = NavType.StringType
+                        })
+                    ) { backStackEntry ->
+                        StringScreen(name = backStackEntry.arguments?.getString("name") ?: "")
+                    }
+                    composable(
+                        "int_screen/{number}",
+                        arguments = listOf(navArgument("number") {
+                            type = NavType.IntType
+                        })
+                    ) { backStackEntry ->
+                        IntScreen(number = backStackEntry.arguments?.getInt("number") ?: -1)
+                    }
+                    composable(
+                        "object_screen/{objectId}",
+                        arguments = listOf(navArgument("objectId") {
+                            type = NavType.IntType
+                        })
+                    ) {
+                        ObjectScreen()
+                    }
+                    composable("second_screen") {
+                        SecondScreen({ navController.navigate("third_screen") })
+                    }
+                    composable("third_screen") {
+                        ThirdScreen({ navController.popBackStack("main_screen", false) })
+                    }
+                }
             }
         }
     }
@@ -29,6 +84,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(
+    goToStringScreen: () -> Unit,
+    goToIntScreen: () -> Unit,
+    goToObjectScreen: () -> Unit,
+    goToSecondScreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -44,17 +103,17 @@ fun MainScreen(
                 fontSize = 28.sp
             )
             Row {
-                Button(onClick = { }) {
+                Button(onClick = { goToStringScreen() }) {
                     Text(text = "Pasar un String")
                 }
-                Button(onClick = { }) {
+                Button(onClick = { goToIntScreen() }) {
                     Text(text = "Pasar un Int")
                 }
             }
-            Button(onClick = { }) {
+            Button(onClick = { goToObjectScreen() }) {
                 Text(text = "Pasar un Objeto")
             }
-            Button(onClick = { }) {
+            Button(onClick = { goToSecondScreen() }) {
                 Text(text = "Ir a una siguiente pantalla")
             }
         }
@@ -117,11 +176,29 @@ data class CustomObject(
     val name: String
 )
 
+class ObjectViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    private val objectId = checkNotNull(savedStateHandle["objectId"])
+
+    private val _customObject: MutableStateFlow<CustomObject> =
+        if (objectId == 5) {
+            MutableStateFlow(CustomObject(2024, "Abril"))
+        } else {
+            MutableStateFlow(CustomObject(-1, ""))
+        }
+    val customObject = _customObject.asStateFlow()
+
+}
+
 @Composable
 fun ObjectScreen(
-    customObject: CustomObject,
+    viewModel: ObjectViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
+    val customObject = viewModel.customObject.collectAsState()
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -135,11 +212,11 @@ fun ObjectScreen(
                 fontSize = 28.sp
             )
             Text(
-                text = customObject.name,
+                text = customObject.value.name,
                 fontSize = 24.sp
             )
             Text(
-                text = customObject.number.toString(),
+                text = customObject.value.number.toString(),
                 fontSize = 24.sp
             )
         }
@@ -148,6 +225,7 @@ fun ObjectScreen(
 
 @Composable
 fun SecondScreen(
+    goToThirdScreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -162,7 +240,7 @@ fun SecondScreen(
                 text = "Segunda pantalla",
                 fontSize = 28.sp
             )
-            Button(onClick = { }) {
+            Button(onClick = { goToThirdScreen() }) {
                 Text(text = "Ir a la tercera pantalla")
             }
         }
@@ -171,6 +249,7 @@ fun SecondScreen(
 
 @Composable
 fun ThirdScreen(
+    goToMainScreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -185,7 +264,7 @@ fun ThirdScreen(
                 text = "Tercera pantalla",
                 fontSize = 28.sp
             )
-            Button(onClick = { }) {
+            Button(onClick = { goToMainScreen() }) {
                 Text(text = "Regresar al Inicio")
             }
         }
