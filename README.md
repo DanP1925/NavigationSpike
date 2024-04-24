@@ -11,10 +11,10 @@ To test them, I created a project with some screens to test:
 - How to handle the navigation stack
 
 On the main branch we have screens for each example and on each other branch the implementation with a different navigation library.
+
 The flow of the app is
 
-
-
+<img width="530" alt="Screenshot 2024-04-24 at 13 14 59" src="https://github.com/DanP1925/NavigationSpike/assets/14140022/503dd9b4-42c9-4e10-ba6f-8a25d4777641">
 
 ## Branches
 
